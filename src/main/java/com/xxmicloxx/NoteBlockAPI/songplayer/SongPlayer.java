@@ -309,7 +309,7 @@ public abstract class SongPlayer {
 	 * Starts this SongPlayer
 	 */
 	private void start() {
-		plugin.doAsync(() -> {
+		plugin.doAsync(task -> {
 			while (!destroyed) {
 				long startTime = System.currentTimeMillis();
 				lock.lock();
@@ -325,7 +325,7 @@ public abstract class SongPlayer {
 								fading = false;
 								if (!playing) {
 									SongStoppedEvent event = new SongStoppedEvent(this);
-									plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
+									plugin.doSync(nextTask -> Bukkit.getPluginManager().callEvent(event));
 									volume = fadeIn.getFadeTarget();
 									continue;
 								}
@@ -357,7 +357,7 @@ public abstract class SongPlayer {
 							volume = fadeIn.getFadeTarget();
 							if (repeat == RepeatMode.ONE){
 								SongLoopEvent event = new SongLoopEvent(this);
-								plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
+								plugin.doSync(nextTask -> Bukkit.getPluginManager().callEvent(event));
 
 								if (!event.isCancelled()) {
 									continue;
@@ -375,15 +375,13 @@ public abstract class SongPlayer {
 
 									if (left.size() == 0) {
 										left.addAll(songQueue.keySet());
-										for (Song s : songQueue.keySet()) {
-											songQueue.put(s, false);
-										}
+                                        songQueue.replaceAll((s, v) -> false);
 										song = left.get(rng.nextInt(left.size()));
 										actualSong = playlist.getIndex(song);
 										CallUpdate("song", song);
 										if (repeat == RepeatMode.ALL) {
 											SongLoopEvent event = new SongLoopEvent(this);
-											plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
+											plugin.doSync(nextTask -> Bukkit.getPluginManager().callEvent(event));
 
 											if (!event.isCancelled()) {
 												continue;
@@ -395,7 +393,7 @@ public abstract class SongPlayer {
 
 										CallUpdate("song", song);
 										SongNextEvent event = new SongNextEvent(this);
-										plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
+										plugin.doSync(nextTask -> Bukkit.getPluginManager().callEvent(event));
 										continue;
 									}
 								} else {
@@ -404,7 +402,7 @@ public abstract class SongPlayer {
 										song = playlist.get(actualSong);
 										CallUpdate("song", song);
 										SongNextEvent event = new SongNextEvent(this);
-										plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
+										plugin.doSync(nextTask -> Bukkit.getPluginManager().callEvent(event));
 										continue;
 									} else {
 										actualSong = 0;
@@ -412,7 +410,7 @@ public abstract class SongPlayer {
 										CallUpdate("song", song);
 										if (repeat == RepeatMode.ALL) {
 											SongLoopEvent event = new SongLoopEvent(this);
-											plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
+											plugin.doSync(nextTask -> Bukkit.getPluginManager().callEvent(event));
 
 											if (!event.isCancelled()) {
 												continue;
@@ -423,7 +421,7 @@ public abstract class SongPlayer {
 							}
 							playing = false;
 							SongEndEvent event = new SongEndEvent(this);
-							plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
+							plugin.doSync(nextTask -> Bukkit.getPluginManager().callEvent(event));
 							if (autoDestroy) {
 								destroy();
 							}
@@ -431,7 +429,7 @@ public abstract class SongPlayer {
 						}
 						CallUpdate("tick", tick);
 						
-						plugin.doSync(() -> {
+						plugin.doSync(nextTask -> {
 							try {
 								for (UUID uuid : playerList.keySet()) {
 									Player player = Bukkit.getPlayer(uuid);
@@ -599,8 +597,7 @@ public abstract class SongPlayer {
 		lock.lock();
 		try {
 			SongDestroyingEvent event = new SongDestroyingEvent(this);
-			plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
-			//Bukkit.getScheduler().cancelTask(threadId);
+			plugin.doSync(task -> Bukkit.getPluginManager().callEvent(event));
 			if (event.isCancelled()) {
 				return;
 			}
@@ -654,7 +651,7 @@ public abstract class SongPlayer {
 			volume = fadeIn.getFadeTarget();
 			if (!playing) {
 				SongStoppedEvent event = new SongStoppedEvent(this);
-				plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
+				plugin.doSync(task -> Bukkit.getPluginManager().callEvent(event));
 			}
 		}
 
@@ -713,7 +710,7 @@ public abstract class SongPlayer {
 			NoteBlockAPI.setSongPlayersByPlayer(player, songs);
 			if (playerList.isEmpty() && autoDestroy) {
 				SongEndEvent event = new SongEndEvent(this);
-				plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
+				plugin.doSync(task -> Bukkit.getPluginManager().callEvent(event));
 				destroy();
 			}
 		} finally {

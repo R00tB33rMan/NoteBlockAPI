@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
-import org.bukkit.Bukkit;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import org.bukkit.entity.Player;
 
 /**
@@ -77,13 +78,13 @@ public class NoteBlockPlayerMain {
 		disabling = true;
 	}
 
-	public void doSync(Runnable runnable) {
-		Bukkit.getServer().getScheduler().runTask(NoteBlockAPI.getAPI(), runnable);
-	}
+    public void doSync(Consumer<WrappedTask> task) {
+       NoteBlockAPI.scheduler().runNextTick(task);
+    }
 
-	public void doAsync(Runnable runnable) {
-		Bukkit.getServer().getScheduler().runTaskAsynchronously(NoteBlockAPI.getAPI(), runnable);
-	}
+    public void doAsync(Consumer<WrappedTask> task) {
+       NoteBlockAPI.scheduler().runAsync(task);
+    }
 
 	public boolean isDisabling() {
 		return disabling;

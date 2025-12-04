@@ -236,7 +236,7 @@ public abstract class SongPlayer {
 	 * Starts this SongPlayer
 	 */
 	private void start() {
-		plugin.doAsync(() -> {
+		plugin.doAsync(task -> {
 			while (!destroyed) {
 				long startTime = System.currentTimeMillis();
 				lock.lock();
@@ -252,7 +252,7 @@ public abstract class SongPlayer {
 							playing = false;
 							tick = -1;
 							SongEndEvent event = new SongEndEvent(SongPlayer.this);
-							plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
+							plugin.doSync(nextTask -> Bukkit.getPluginManager().callEvent(event));
 							if (autoDestroy) {
 								destroy();
 							}
@@ -260,7 +260,7 @@ public abstract class SongPlayer {
 						}
 						CallUpdate("tick", tick);
 
-						plugin.doSync(() -> {
+						plugin.doSync(nextTask -> {
 							for (String s : playerList.keySet()) {
 	                            Player p = Bukkit.getPlayerExact(s);
 	                            if (p == null) {
@@ -376,8 +376,7 @@ public abstract class SongPlayer {
 		lock.lock();
 		try {
 			SongDestroyingEvent event = new SongDestroyingEvent(this);
-			plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
-			//Bukkit.getScheduler().cancelTask(threadId);
+			plugin.doSync(task -> Bukkit.getPluginManager().callEvent(event));
 			if (event.isCancelled()) {
 				return;
 			}
@@ -407,7 +406,7 @@ public abstract class SongPlayer {
 		this.playing = playing;
 		if (!playing) {
 			SongStoppedEvent event = new SongStoppedEvent(this);
-			plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
+			plugin.doSync(task -> Bukkit.getPluginManager().callEvent(event));
 		}
 		CallUpdate("playing", playing);
 	}
@@ -453,7 +452,7 @@ public abstract class SongPlayer {
 			NoteBlockPlayerMain.plugin.playingSongs.put(player.getName(), songs);
 			if (playerList.isEmpty() && autoDestroy) {
 				SongEndEvent event = new SongEndEvent(this);
-				plugin.doSync(() -> Bukkit.getPluginManager().callEvent(event));
+				plugin.doSync(task -> Bukkit.getPluginManager().callEvent(event));
 				destroy();
 			}
 		} finally {
